@@ -7,3 +7,4 @@
 
 The NLDAS grid shapefile is required for using this tool. It is available in the sample_data folder or can be downloaded here: https://ldas.gsfc.nasa.gov/faq/nldas
 
+See main.py for an example importing and using the tool.
