@@ -117,6 +117,7 @@ class NLDAS_Downloader():
             urls.append(full_url)
 
         self.urls = urls
+        self.urls = list(set(self.urls))
 
     def download(self, out_dir):
         missing_cells = []
@@ -158,7 +159,12 @@ class NLDAS_Downloader():
         for i in range(len(self.intsct)):
             proportion = overlapping_area[i]/watershed_area[self.intsct['save_index'][i]]
             proportions.append(proportion)
-            watershed_id = self.intsct['save_index'][i]
+
+            if 'GAGE_ID' in self.intsct:
+                watershed_id = self.intsct['GAGE_ID'][i]
+
+            else:
+                watershed_id = self.intsct['save_index'][i]
             watersheds.append(watershed_id)
 
         proportions_df = pd.DataFrame({'watershed_id': watersheds, 'nldas_id': self.cells, 'proportion_of_watershed': proportions})
@@ -209,4 +215,5 @@ class NLDAS_Downloader():
             plt.ylabel('Area Weighted Precipitation (mm/hr)')
             plt.savefig('{}/P_timeseries_ws{}.png'.format(weight_dir, ws))
             plt.clf()
+
 
