@@ -1,3 +1,5 @@
+## NOTE: package is in progress, precipitation totals currently do not come out correctly
+
 # climrods
  Python module for efficiently downloading NLDAS forcing data
  
