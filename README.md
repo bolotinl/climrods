@@ -1,3 +1,5 @@
+## NOTE: package is a work in progress
+
 # climrods
  Python module for efficiently downloading NLDAS forcing data
  
