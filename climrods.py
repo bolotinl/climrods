@@ -118,6 +118,7 @@ class NLDAS_Downloader():
 
     def download(self, out_dir):
         missing_cells = []
+        self.out_dir = out_dir
         for i in list(set(self.urls)):
             try:
                 with urlopen(i) as webpage:
@@ -175,7 +176,7 @@ class NLDAS_Downloader():
         full_timeseries = pd.date_range(start=start, end=end, freq='H')
         precip_values = [0]*len(full_timeseries)
 
-        files = glob.glob(out_dir+'APCPsfc*.csv')
+        files = glob.glob(self.out_dir+'APCPsfc*.csv')
 
         # Split by watershed (if multiple)
         df_list = [d for _, d in proportions_df.groupby(['watershed_id'])]
