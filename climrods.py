@@ -96,6 +96,7 @@ class NLDAS_Downloader():
             new_id_col.append(new_id)
 
         intsct['nldas_id'] = new_id_col
+        intsct['AREA']= intsct['geometry'].area
 
         self.intsct = intsct
 
@@ -143,10 +144,13 @@ class NLDAS_Downloader():
         if not os.path.exists(weight_dir):
             os.mkdir(weight_dir)
 
-        overlapping_area = self.intsct.geometry.area #m2
+        overlapping_area = self.intsct['AREA'] #m2
         overlapping_area = overlapping_area/1000000 #km2
 
         watershed = gpd.read_file(self.shp_path)
+        watershed = watershed.to_crs('EPSG:5070')
+
+        watershed['AREA'] = watershed['geometry'].area
         watershed_area = watershed['AREA']/1000000 #km2
 
         proportions = []
@@ -171,7 +175,7 @@ class NLDAS_Downloader():
         full_timeseries = pd.date_range(start=start, end=end, freq='H')
         precip_values = [0]*len(full_timeseries)
 
-        files = glob.glob('./output/*.csv')
+        files = glob.glob(out_dir+'APCPsfc*.csv')
 
         # Split by watershed (if multiple)
         df_list = [d for _, d in proportions_df.groupby(['watershed_id'])]
@@ -211,33 +215,3 @@ class NLDAS_Downloader():
             plt.ylabel('Area Weighted Precipitation (mm/hr)')
             plt.savefig('{}/P_timeseries_ws{}.png'.format(weight_dir, ws))
             plt.clf()
-
-
-# TEST ##################################################
-start_dt = '2001-01-01'
-end_dt = '2001-12-31'
-start_hr = '00'
-end_hr = '23'
-
-test = NLDAS_Downloader(start_dt, end_dt, start_hr, end_hr)
-
-grid_path = '../sample_data/NLDAS_Grid_Reference.shp'
-usgs_path = '../sample_data/Q_site_info.csv'
-shp_out_path = '../output/usgs_gage_example/san_pedro_watersheds.shp'
-
-# Test function 1
-test.watershed_from_gauge(usgs_path, 'site_no', shp_out_path)
-
-# Test function 2
-test.intersect_watershed(shp_out_path, grid_path)
-
-# Test function 3
-test.url_builder()
-
-# Test function 4
-out_dir = '../output/usgs_gage_example/'
-test.download(out_dir)
-
-# Test function 5 
-weight_dir = '../output/usgs_gage_example/area_weighted/'
-test.area_weight_P(weight_dir)
