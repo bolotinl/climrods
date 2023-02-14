@@ -7,6 +7,8 @@ import urllib
 import glob
 import matplotlib.pyplot as plt
 import numpy as np
+import json
+from shapely.geometry import Polygon
 
 class NLDAS_Downloader():
     def __init__(self, start_date_utc, end_date_utc,start_hour_utc=0, end_hour_utc=23, parameter = 'APCPsfc'):
@@ -25,6 +27,49 @@ class NLDAS_Downloader():
         self.end_hour_utc = end_hour_utc
         self.parameter = parameter
         
+    def watershed_from_gauge(self, usgs_path, gage_id_col, shp_out_path):
+        '''
+        Function to create a shapefile of all upstream watershed boundaries using USGS gage IDs
+        :param usgs_path: path to a CSV file of numeric site numbers for USGS streamgages
+        :param gage_id_col: a string specifying the name of which column in the file usgs_path contains the USGS gage IDs
+        :param shp_out_path: path where the final shapefile of all watershed boundaries should be saved, ending with .shp
+        '''
+        usgs_info = pd.read_csv(usgs_path)
+        usgs_info[gage_id_col] = usgs_info[gage_id_col].astype(str)
+        usgs_info[gage_id_col] = usgs_info[gage_id_col].str.zfill(8)
+        gages = usgs_info[gage_id_col]
+
+        # Create empty geodataframe which will be populated in the for loop below
+        polygons = gpd.GeoDataFrame(columns=['geometry', 'GAGE_ID'], geometry='geometry')
+
+        for g in gages:
+            # Pull boundary data from USGS API
+            usgs_api = 'https://labs.waterdata.usgs.gov/api/nldi/linked-data/nwissite/USGS-'+g+'/basin?f=json'
+            response = urlopen(usgs_api)
+            boundary_data = json.load(response)
+
+            # Pull geometry from the file and convert into a polygon
+            coords = boundary_data['features'][0]['geometry']['coordinates'][0]
+
+            longitude = []
+            latitude = []
+
+            for i in coords:
+                longitude.append(i[0])
+                latitude.append(i[1])
+
+
+            polygon_geom = Polygon(zip(longitude, latitude))
+            polygon = gpd.GeoDataFrame(index=[0], crs='EPSG:4326', geometry=[polygon_geom])
+            polygon = polygon.assign(GAGE_ID=g)
+
+            # Add all watersheds to the geodataframe we created before
+            polygons = pd.concat([polygons, polygon])
+            polygons.set_crs(epsg = 4326)
+        polygons.to_file(filename= shp_out_path, driver="ESRI Shapefile")
+
+
+        
     def intersect_watershed(self, shp_path, grid_path):
         '''
         :param shp_path: filepath to a shapefile of one or more watershed boundaries
@@ -40,8 +85,9 @@ class NLDAS_Downloader():
         watershed['save_index'] = watershed.index
 
         # Convert both shapefiles to the same coordinate system (Albers Equal Area)
-        grid = grid.to_crs('+proj=aea +lat_1=29.5 +lat_2=42.5')
-        watershed = watershed.to_crs('+proj=aea +lat_1=29.5 +lat_2=42.5')
+        grid = grid.to_crs('EPSG:4326')
+        watershed.crs = {'init': 'EPSG:4326'}
+        # watershed = watershed.to_crs('EPSG:4326')
 
 
         # Intersect grid with watershed(s)
@@ -163,33 +209,4 @@ class NLDAS_Downloader():
             plt.ylabel('Area Weighted Precipitation (mm/hr)')
             plt.savefig('{}/P_timeseries_ws{}.png'.format(weight_dir, ws))
             plt.clf()
-
-
-# TEST ------------------------------------------------------------------------------------------
-# # Create object
-# start_dt = '2001-01-01'
-# end_dt = '2001-12-31'
-# start_hr = '00'
-# end_hr = '23'
-
-# test = NLDAS_Downloader(start_dt, end_dt, start_hr, end_hr)
-
-# os.chdir('/Volumes/GoogleDrive/My Drive/Overland Flow MS/Data/NLDAS')
-# out_dir = "./output"
-# grid_path = './NLDAS_Grid_Reference/NLDAS_Grid_Reference.shp'
-# shp_path = './NLDAS_Grid_Reference/truckee_watersheds_0/truckee_HUC.shp'
-
-# # Test function 1
-# test.intersect_watershed(shp_path, grid_path)
-
-# # Test function 2
-# test.url_builder()
-
-# # Test function 3
-# out_dir = './output'
-# test.download(out_dir)
-
-# # Test function 4 
-# weight_dir = './output/area_weighted/'
-# test.area_weight_P(weight_dir)
 
