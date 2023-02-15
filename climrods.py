@@ -13,7 +13,7 @@ from shapely.geometry import Polygon
 class NLDAS_Downloader():
     def __init__(self, start_date_utc, end_date_utc,start_hour_utc=0, end_hour_utc=23, parameter = 'APCPsfc'):
         '''
-        NLDAS_Downloaßder class constructor
+        NLDAS_Downloader class constructor
         :param start_date_utc: desired start date of time series
         :param start_hour_utc: desired start hour of time series, in UTC 
         :param end_date_utc: desired end date of time series
@@ -101,6 +101,9 @@ class NLDAS_Downloader():
         self.intsct = intsct
 
     def url_builder(self):
+        '''
+        Function to construct a list of URLs which will be used to webscrape NLDAS data
+        '''
         self.cells = list(self.intsct['nldas_id'])
         base_url = 'https://hydro1.gesdisc.eosdis.nasa.gov/daac-bin/access/timeseries.cgi?variable=NLDAS:NLDAS_FORA0125_H.002:'
         url_loc = '&location=NLDAS:'
@@ -117,7 +120,14 @@ class NLDAS_Downloader():
         self.urls = list(set(self.urls))
 
     def download(self, out_dir):
+        '''
+        Function to download NLDAS data by grid cell from a list of pre-constructed URLs
+        :param out_dir: path where downloaded data should be saved
+        '''
         missing_cells = []
+        if out_dir.endswith('/') == False:
+            out_dir = out_dir+'/'
+
         self.out_dir = out_dir
         for i in list(set(self.urls)):
             try:
@@ -142,6 +152,9 @@ class NLDAS_Downloader():
         Function to calculate and output area weighted NLDAS precipitation timeseries
         :param weight_dir: path to directory where files with area weighted precipitation should be saved
         '''
+        if weight_dir.endswith('/') == False:
+            weight_dir = weight_dir+'/'
+
         if not os.path.exists(weight_dir):
             os.mkdir(weight_dir)
 
@@ -241,6 +254,8 @@ class NLDAS_Downloader():
 
 # # Test function 4
 # out_dir = '../output/usgs_gage_example/'
+# # If skipping downloading, run the following:
+# # test.out_dir = out_dir
 # test.download(out_dir)
 
 # # Test function 5 
