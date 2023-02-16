@@ -187,7 +187,6 @@ class NLDAS_Downloader():
         start = self.start_date_utc+' '+self.start_hour_utc+':00:00'
         end = self.end_date_utc+' '+self.end_hour_utc+':00:00'
         full_timeseries = pd.date_range(start=start, end=end, freq='H')
-        precip_values = [0]*len(full_timeseries)
 
         files = glob.glob(self.out_dir+'APCPsfc*.csv')
 
@@ -198,6 +197,7 @@ class NLDAS_Downloader():
         for f in df_list:
             cells = list(f['nldas_id'])
             ws = str(max(f['watershed_id']))
+            precip_values = [0]*len(full_timeseries)
 
             # Iterate through all data files...
             for i in files:
