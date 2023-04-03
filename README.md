@@ -1,7 +1,7 @@
 ## NOTE: package is a work in progress
 
 # climrods
- Python module for efficiently downloading NLDAS forcing data
+ Python module for efficiently downloading hourly NLDAS forcing data and calculating area-weighted precipitation time series
  
  Currently, the tool requires that you can either provide 1) a shapefile for the watershed(s) you are interested in or 2) USGS streamgage iDs for watersheds you are interested in. Future development will provide functionality to delineate watersheds from a point within the tool.
  
