@@ -153,8 +153,9 @@ class NLDAS_Downloader():
                 parameter = re.search('NLDAS_FORA0125_H.002:(.*)&location', i).group(1)
                 cell = re.search('&location=NLDAS:(.*)&startDate', i).group(1)
 
-                with open( '{}{}_{}.csv'.format(out_dir, parameter, cell), 'w' ) as output:
-                    output.write( content )
+                if os.path.exists('{}{}_{}.csv'.format(out_dir, parameter, cell) == False):
+                    with open( '{}{}_{}.csv'.format(out_dir, parameter, cell), 'w' ) as output:
+                        output.write( content )
             except urllib.error.HTTPError as e:
                 missing_cells.append(cell)           
                 print('Failed to extract data at the following URL: {}'.format(i))
