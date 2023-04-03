@@ -45,11 +45,26 @@ class NLDAS_Downloader():
         for g in gages:
             # Pull boundary data from USGS API
             usgs_api = 'https://labs.waterdata.usgs.gov/api/nldi/linked-data/nwissite/USGS-'+g+'/basin?f=json'
-            response = urlopen(usgs_api)
-            boundary_data = json.load(response)
+            
+            # Some sites return an error (the page doesn't exist)
+            try:
+                response = urlopen(usgs_api)
+            except urllib.error.HTTPError as e:
+                print('Upstream basin webpage does not exist for USGS-{}'.format(g))
+                continue
+            # Some sites return a blank page (the data doesn't exist)
+            try:
+                boundary_data = json.load(response)
+            except json.decoder.JSONDecodeError as e:
+                print('Upstream basin data does not exist for USGS-{}'.format(g))
+                continue
 
             # Pull geometry from the file and convert into a polygon
-            coords = boundary_data['features'][0]['geometry']['coordinates'][0]
+            # Some sites have their data formatted differently than others (sadly), account for this
+            if len(boundary_data['features'][0]['geometry']['coordinates'][0][0]) == 2:
+                coords = boundary_data['features'][0]['geometry']['coordinates'][0]
+            else:
+                coords = boundary_data['features'][0]['geometry']['coordinates'][0][0]
 
             longitude = []
             latitude = []
